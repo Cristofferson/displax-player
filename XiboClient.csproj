@@ -6,8 +6,12 @@
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
     <ProjectGuid>{88215F84-47F4-4A74-B413-BC3A1443A538}</ProjectGuid>
     <OutputType>WinExe</OutputType>
+    <!-- RootNamespace deliberately stays XiboClient: renaming the namespace
+         would touch every source file and turn each upstream release into a
+         merge conflict, for no user-visible gain. AssemblyName is what shows up
+         in Task Manager and Program Files, so that one does change. -->
     <RootNamespace>XiboClient</RootNamespace>
-    <AssemblyName>XiboClient</AssemblyName>
+    <AssemblyName>DisplaxPlayer</AssemblyName>
     <TargetFrameworkVersion>v4.7.2</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <ProjectTypeGuids>{60dc8134-eba5-43b8-bcc9-bb4bc16c2548};{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}</ProjectTypeGuids>
@@ -400,7 +404,7 @@
   </Target>
   <PropertyGroup>
     <PostBuildEvent>powershell -NoProfile -ExecutionPolicy Bypass -Command "$p='$(TargetPath)'; $b=[IO.File]::ReadAllBytes($p); $o=[BitConverter]::ToInt32($b,0x3C)+22; $b[$o]=[byte]($b[$o] -bor 0x20); [IO.File]::WriteAllBytes($p,$b)"
-echo FD|xcopy /Y "$(TargetPath)" "$(TargetDir)Xibo.scr"
-echo FD|xcopy /Y "$(TargetDir)XiboClient.exe.config" "$(TargetDir)Xibo.scr.config"</PostBuildEvent>
+echo FD|xcopy /Y "$(TargetPath)" "$(TargetDir)DISPLAX.scr"
+echo FD|xcopy /Y "$(TargetPath).config" "$(TargetDir)DISPLAX.scr.config"</PostBuildEvent>
   </PropertyGroup>
 </Project>

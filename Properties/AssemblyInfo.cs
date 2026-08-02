@@ -5,12 +5,22 @@ using System.Windows;
 // General Information about an assembly is controlled through the following
 // set of attributes. Change these attribute values to modify the information
 // associated with an assembly.
-[assembly: AssemblyTitle("Xibo Open Source Digital Signage")]
+// AssemblyProduct is the rebranding hook for the whole player:
+// ApplicationSettings.GetProductNameFromAssembly() reads it, and from there it
+// drives the main window title, the media library folder
+// (My Documents\<Product> Library), the Windows event log source and the name
+// of the watchdog executable. Change it here and it cascades; there is no
+// second place to edit.
+//
+// AssemblyCopyright KEEPS the upstream notice. This is a fork of
+// xibosignage/xibo-dotnetclient under the AGPLv3, which requires the original
+// copyright notices to be preserved — ours is added alongside, never instead.
+[assembly: AssemblyTitle("DISPLAX Digital Signage")]
 [assembly: AssemblyDescription("Digital Signage Player")]
 [assembly: AssemblyConfiguration("")]
-[assembly: AssemblyCompany("Xibo Digital Signage")]
-[assembly: AssemblyProduct("Xibo")]
-[assembly: AssemblyCopyright("Copyright © Xibo Signage Ltd 2026")]
+[assembly: AssemblyCompany("XUBAX")]
+[assembly: AssemblyProduct("DISPLAX")]
+[assembly: AssemblyCopyright("Copyright © Xibo Signage Ltd 2026. DISPLAX branding copyright © XUBAX 2026. Licensed under the GNU AGPLv3.")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]
 
