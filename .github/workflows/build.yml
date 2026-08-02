@@ -50,3 +50,29 @@ jobs:
           name: displax-player-release
           path: bin/Release/
           if-no-files-found: error
+
+      # Los ~310 archivos y ~350 MB de arriba no se reparten a mano a nueve
+      # tiendas. Este paso los convierte en un unico instalador, que es lo que
+      # de verdad se descarga y se lleva a la sucursal.
+      - name: Install Inno Setup
+        run: choco install innosetup --no-progress -y
+
+      - name: Build the installer
+        shell: pwsh
+        run: |
+          # La version sale del ensamblado recien compilado, para que lo que
+          # anuncia Agregar o quitar programas coincida siempre con el binario.
+          $v = (Get-Item bin\Release\DisplaxPlayer.exe).VersionInfo.FileVersion
+          if (-not $v) { $v = '4.407.0' }
+          Write-Host "Empaquetando version $v"
+          & "${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe" `
+            "/DAppVersion=$v" `
+            "/DPayloadDir=$(Resolve-Path bin\Release)" `
+            installer\displax-player.iss
+
+      - name: Upload the installer
+        uses: actions/upload-artifact@v4
+        with:
+          name: DISPLAX-Player-Setup
+          path: dist/DISPLAX-Player-Setup.exe
+          if-no-files-found: error

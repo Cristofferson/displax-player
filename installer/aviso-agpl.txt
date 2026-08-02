@@ -1,0 +1,41 @@
+DISPLAX Player
+Señalización digital — por XUBAX
+
+QUÉ ESTÁ INSTALANDO
+
+DISPLAX Player es una versión con marca propia de Xibo for Windows, el
+reproductor de señalización digital de Xibo Signage Ltd. Es software libre bajo
+la Licencia Pública General Affero de GNU, versión 3 (AGPLv3).
+
+Esto significa que usted puede usarlo, estudiarlo, modificarlo y redistribuirlo
+bajo esa misma licencia. El texto completo se muestra en la siguiente pantalla y
+queda instalado junto al programa.
+
+CÓDIGO FUENTE
+
+La licencia obliga a que usted pueda obtener el código fuente correspondiente a
+este binario. Está disponible públicamente:
+
+  DISPLAX Player .......... https://github.com/Cristofferson/displax-player
+  DISPLAX Watchdog ........ https://github.com/Cristofferson/displax-player-watchdog
+
+Ambos son forks del proyecto original, que vive en:
+
+  Xibo for Windows ........ https://github.com/xibosignage/xibo-dotnetclient
+  Xibo (proyecto) ......... https://xibosignage.com
+
+DERECHOS DE AUTOR
+
+Copyright © Xibo Signage Ltd — programa original.
+Copyright © XUBAX 2026 — marca DISPLAX y modificaciones.
+
+Xibo es una marca de Xibo Signage Ltd. DISPLAX no está afiliado a Xibo Signage
+Ltd ni respaldado por ellos; el nombre y la marca DISPLAX identifican
+únicamente esta versión modificada.
+
+SIN GARANTÍA
+
+Este programa se distribuye con la esperanza de que sea útil, pero SIN NINGUNA
+GARANTÍA, ni siquiera la garantía implícita de COMERCIABILIDAD o APTITUD PARA UN
+PROPÓSITO PARTICULAR. Consulte la Licencia Pública General Affero de GNU para
+más detalles.
