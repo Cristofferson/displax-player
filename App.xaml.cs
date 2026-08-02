@@ -189,7 +189,13 @@ namespace XiboClient
                     {
                         if (!EventLog.SourceExists(productName))
                         {
-                            EventLog.CreateEventSource(productName, "Xibo");
+                            // The second argument is the name of the Windows
+                            // event LOG, which shows up in Event Viewer. It was
+                            // hard-coded to "Xibo" while the source next to it
+                            // already followed the product, so a rebranded
+                            // player still filed its crashes under a log named
+                            // after the upstream project.
+                            EventLog.CreateEventSource(productName, productName);
                         }
 
                         EventLog.WriteEntry(productName, e.ToString(), EventLogEntryType.Error);

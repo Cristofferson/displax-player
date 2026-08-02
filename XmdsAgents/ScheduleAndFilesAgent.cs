@@ -559,7 +559,10 @@ namespace XiboClient.XmdsAgents
 
                 Trace.WriteLine(new LogMessage("ScheduleAgent - Run", "Thread Woken and Lock Obtained"), LogType.Audit.ToString());
 
-                ClientInfo.Instance.ScheduleStatus = "Running: Get Data from Xibo Server";
+                // Shown on the player's Information and Status screen, so it
+                // must not name the upstream project. "CMS" is what the rest of
+                // the interface calls the server anyway.
+                ClientInfo.Instance.ScheduleStatus = "Running: Get Data from CMS";
 
                 using (xmds.xmds xmds = new xmds.xmds())
                 {
