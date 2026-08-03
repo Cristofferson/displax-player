@@ -44,6 +44,52 @@ jobs:
           }
           Write-Host "Found $($dll.Name)"
 
+      # The player starts its own watchdog from
+      # <player folder>\watchdog\x86\<Product>Watchdog.exe (Control/WatchDogManager.cs).
+      # That call is guarded by File.Exists and logs NOTHING when the file is
+      # missing, so a payload without the watchdog produces a player that looks
+      # fine and never recovers from a freeze — the one job the watchdog has.
+      # The watchdog lives in its own repository, so it is built here and staged
+      # into the payload rather than left to a second installer.
+      - name: Check out the watchdog
+        uses: actions/checkout@v4
+        with:
+          repository: Cristofferson/displax-player-watchdog
+          ref: displax
+          path: watchdog-src
+
+      # That project is still on packages.config, so restore is a nuget.exe call
+      # and not an MSBuild target like the player's.
+      - name: Set up NuGet
+        uses: NuGet/setup-nuget@v2
+
+      - name: Restore the watchdog packages
+        run: nuget restore watchdog-src\XiboClientWatchdog.sln
+
+      - name: Build the watchdog
+        run: msbuild watchdog-src\XiboClientWatchdog.sln -t:build -p:Configuration=Release -m
+
+      - name: Stage the watchdog where the player looks for it
+        shell: pwsh
+        run: |
+          $exe = Get-ChildItem -Path watchdog-src\bin -Recurse -Filter DISPLAXWatchdog.exe |
+            Select-Object -First 1
+          if (-not $exe) {
+            Write-Error "DISPLAXWatchdog.exe was not produced — the player would run unsupervised."
+            exit 1
+          }
+          $dest = 'bin\Release\watchdog\x86'
+          New-Item -ItemType Directory -Force -Path $dest | Out-Null
+          # Its dependencies (Trove.Nini) and the .config travel with it.
+          Copy-Item -Path (Join-Path $exe.Directory.FullName '*') -Destination $dest -Recurse -Force
+          # The path below is built by WatchDogManager.Start(); a typo here is
+          # silent at runtime, so it is an error here instead.
+          if (-not (Test-Path "$dest\DISPLAXWatchdog.exe")) {
+            Write-Error "The watchdog is not at $dest\DISPLAXWatchdog.exe — the player would not find it."
+            exit 1
+          }
+          Write-Host "Watchdog staged at $dest"
+
       - name: Upload build output
         uses: actions/upload-artifact@v4
         with:
