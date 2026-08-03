@@ -293,7 +293,12 @@ namespace XiboClient
             // open URL in separate instance of default browser
             try
             {
-                Process.Start(ApplicationSettings.Default.ServerUri + @"/display/view");
+                // The CMS address is typed by hand and very often ends in a slash.
+                // Concatenating straight on top of it sends the browser to
+                // //display/view, which the CMS answers with an error instead of the
+                // display page.
+                string cms = (ApplicationSettings.Default.ServerUri ?? string.Empty).TrimEnd('/');
+                Process.Start(cms + "/display/view");
             }
             catch
             {
