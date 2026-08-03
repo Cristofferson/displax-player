@@ -71,7 +71,11 @@ Source: "..\tools\Migrate-FromXibo.ps1"; DestDir: "{app}\tools"; Flags: ignoreve
 
 [Icons]
 Name: "{group}\{#AppName}"; Filename: "{app}\{#AppExeName}"
-Name: "{group}\Opciones de DISPLAX Player"; Filename: "{app}\{#AppExeName}"; Parameters: "-o"
+; El argumento va SIN guion: App.xaml.cs compara contra la cadena "o" pelada, y
+; cualquier otra forma cae en el caso por omision, que arranca el player como
+; salvapantallas y se cierra al primer movimiento del mouse: parece que el acceso
+; directo no hace nada.
+Name: "{group}\Opciones de DISPLAX Player"; Filename: "{app}\{#AppExeName}"; Parameters: "o"
 Name: "{commondesktop}\{#AppName}"; Filename: "{app}\{#AppExeName}"; Tasks: escritorio
 Name: "{commonstartup}\{#AppName}"; Filename: "{app}\{#AppExeName}"; Tasks: autoarranque
 
@@ -89,8 +93,15 @@ Filename: "powershell.exe"; \
   StatusMsg: "Migrando ajustes y biblioteca desde la instalacion anterior..."; \
   Flags: runhidden waituntilterminated
 
-Filename: "{app}\{#AppExeName}"; Description: "Iniciar DISPLAX Player ahora"; \
+; En una pantalla nueva no hay ajustes que migrar y el player arranca sin registrar:
+; una pantalla en negro que parece un cuelgue. Por eso la primera casilla es la de
+; configurar el CMS, y viene marcada.
+Filename: "{app}\{#AppExeName}"; Parameters: "o"; \
+  Description: "Configurar la direccion del CMS y la llave ahora"; \
   Flags: nowait postinstall skipifsilent
+
+Filename: "{app}\{#AppExeName}"; Description: "Iniciar DISPLAX Player ahora"; \
+  Flags: nowait postinstall skipifsilent unchecked
 
 [UninstallDelete]
 ; Se borra lo que el instalador puso, nunca la biblioteca ni los ajustes: un

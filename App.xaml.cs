@@ -42,14 +42,21 @@ namespace XiboClient
                 // Check for any passed arguments
                 if (e.Args.Length > 0)
                 {
-                    if (e.Args[0].ToString() == "o")
+                    string arg = e.Args[0].ToLower().Trim();
+
+                    // Upstream only accepts a bare "o" here, but a shortcut written by hand
+                    // reaches for "-o" or "/o" just as readily, and getting it wrong fails
+                    // silently in the worst way: the argument falls through to the default
+                    // branch below and starts the player in screen saver mode, so the window
+                    // closes on the first mouse move instead of showing the CMS settings.
+                    if (arg == "o" || arg == "-o" || arg == "/o")
                     {
                         shouldQuit = true;
                         RunSettings();
                     }
                     else
                     {
-                        switch (e.Args[0].ToLower().Trim().Substring(0, 2))
+                        switch (arg.Substring(0, Math.Min(2, arg.Length)))
                         {
                             // Preview the screen saver
                             case "/p":
