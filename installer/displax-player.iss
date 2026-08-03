@@ -62,12 +62,19 @@ Name: "en"; MessagesFile: "compiler:Default.isl"
 [Tasks]
 Name: "autoarranque"; Description: "Iniciar DISPLAX Player al encender el equipo"; GroupDescription: "Operacion desatendida:"
 Name: "escritorio"; Description: "Crear acceso directo en el escritorio"; Flags: unchecked
+; La compilacion ya trae DISPLAX.scr, que es el mismo binario con el bit de
+; salvapantallas puesto. Se registra por ruta completa y NO copiandolo a System32:
+; ahi no encontraria los ~310 archivos que necesita a su lado.
+Name: "salvapantallas"; Description: "Usar el player como salvapantallas a los 10 minutos sin actividad"; GroupDescription: "Operacion desatendida:"; Flags: unchecked
 
 [Files]
 Source: "{#PayloadDir}\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
 ; El script de migracion viaja con el instalador para poder relanzarlo a mano
 ; si algo sale raro y hay que revisar con -WhatIf antes de repetir.
 Source: "..\tools\Migrate-FromXibo.ps1"; DestDir: "{app}\tools"; Flags: ignoreversion
+; Tambien viaja suelto para poder activar o quitar el salvapantallas despues, sin
+; reinstalar, en las maquinas donde se decida mas tarde.
+Source: "..\tools\Install-Screensaver.ps1"; DestDir: "{app}\tools"; Flags: ignoreversion
 
 [Icons]
 Name: "{group}\{#AppName}"; Filename: "{app}\{#AppExeName}"
@@ -93,6 +100,14 @@ Filename: "powershell.exe"; \
   StatusMsg: "Migrando ajustes y biblioteca desde la instalacion anterior..."; \
   Flags: runhidden waituntilterminated
 
+; El ajuste del salvapantallas es POR USUARIO, asi que corre con -AllUsers por la
+; misma razon que la migracion: quien instala es un administrador y quien mira la
+; pantalla no.
+Filename: "powershell.exe"; \
+  Parameters: "-NoProfile -ExecutionPolicy Bypass -File ""{app}\tools\Install-Screensaver.ps1"" -AllUsers"; \
+  StatusMsg: "Registrando el salvapantallas..."; \
+  Flags: runhidden waituntilterminated; Tasks: salvapantallas
+
 ; En una pantalla nueva no hay ajustes que migrar y el player arranca sin registrar:
 ; una pantalla en negro que parece un cuelgue. Por eso la primera casilla es la de
 ; configurar el CMS, y viene marcada.
@@ -102,6 +117,15 @@ Filename: "{app}\{#AppExeName}"; Parameters: "o"; \
 
 Filename: "{app}\{#AppExeName}"; Description: "Iniciar DISPLAX Player ahora"; \
   Flags: nowait postinstall skipifsilent unchecked
+
+[UninstallRun]
+; Si se registro el salvapantallas hay que soltarlo antes de borrar los archivos,
+; o Windows queda apuntando a un .scr que ya no existe. Corre siempre, no solo
+; cuando la tarea estuvo marcada: quitarlo cuando no estaba puesto no hace nada.
+Filename: "powershell.exe"; \
+  Parameters: "-NoProfile -ExecutionPolicy Bypass -File ""{app}\tools\Install-Screensaver.ps1"" -Remove -AllUsers"; \
+  StatusMsg: "Quitando el salvapantallas..."; \
+  Flags: runhidden waituntilterminated; RunOnceId: "QuitarSalvapantallas"
 
 [UninstallDelete]
 ; Se borra lo que el instalador puso, nunca la biblioteca ni los ajustes: un
