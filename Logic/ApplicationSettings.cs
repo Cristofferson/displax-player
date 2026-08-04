@@ -130,7 +130,7 @@ namespace XiboClient
                 // Check to see if we need to migrate
                 XmlDocument document;
                 string path = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
-                string fileName = Path.GetFileNameWithoutExtension(executablePath);
+                string fileName = GetSettingsFileNameFromAssembly();
 
                 if (File.Exists(path + Path.DirectorySeparatorChar + fileName + ".config.xml"))
                 {
@@ -188,9 +188,8 @@ namespace XiboClient
 
             lock (Locker)
             {
-                string executablePath = Process.GetCurrentProcess().MainModule.FileName;
                 string path = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
-                string fileName = Path.GetFileNameWithoutExtension(executablePath);
+                string fileName = GetSettingsFileNameFromAssembly();
 
                 // Write the global settings file
                 using (XmlWriter writer = XmlWriter.Create(path + Path.DirectorySeparatorChar + fileName + ".xml"))
@@ -640,6 +639,25 @@ namespace XiboClient
                                 .GetCustomAttributes(typeof(AssemblyProductAttribute))
                                 .OfType<AssemblyProductAttribute>()
                                 .FirstOrDefault().Product;
+        }
+
+        /// <summary>
+        /// The name the settings files in %APPDATA% are stored under.
+        ///
+        /// This comes from the assembly and NOT from the file on disk, which is the whole point.
+        /// The screen saver is a byte-for-byte copy of this binary named DISPLAX.scr, so
+        /// Process.MainModule.FileName says "DISPLAX" while it runs: reading the settings from
+        /// there sent it looking for a DISPLAX.xml nobody had ever written, and it came up with no
+        /// CMS address, no key and no identity on a screen where the player sitting next to it was
+        /// fully registered. The assembly name survives copying and renaming the file, so player
+        /// and screen saver read and write the one file and cannot drift apart - including when
+        /// the CMS key is rotated long after the install.
+        ///
+        /// The library and the hardware key were never affected: those hang off the product name.
+        /// </summary>
+        public static string GetSettingsFileNameFromAssembly()
+        {
+            return Assembly.GetEntryAssembly().GetName().Name;
         }
     }
 }

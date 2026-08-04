@@ -16,15 +16,21 @@
     trap as the player's own settings. -AllUsers walks every real profile,
     loading each NTUSER.DAT that is not already mounted.
 
-    One more consequence of how the player names things: settings live in
-    %APPDATA%\<executable name>.xml (ApplicationSettings.cs derives the file name
-    from the running .exe), and the screen saver runs as DISPLAX.scr while the
-    player runs as DisplaxPlayer.exe. They therefore do NOT share the CMS
-    address, the CMS key or the proxy — the screen saver would come up
-    unregistered with nothing to show. This script copies the player's settings
-    across on the way in. The library and the display identity ARE shared,
-    because those hang off the product name and not the executable, so the CMS
-    still sees one screen and nothing is downloaded twice.
+    Settings are shared with the player and this script does nothing about them.
+    They live in %APPDATA%\<assembly name>.xml, and the assembly name does not
+    change when the build copies the .exe to DISPLAX.scr, so both read and write
+    DisplaxPlayer.xml. The screen saver therefore has the CMS address, the key
+    and the proxy the moment the player has them — and keeps them if the key is
+    rotated later. The library and the display identity are shared too, because
+    those hang off the product name, so the CMS still sees one screen and
+    nothing is downloaded twice.
+
+    It did not always work that way: ApplicationSettings.cs used to name the file
+    after the running .exe, so the screen saver looked for a DISPLAX.xml nobody
+    had written and came up unregistered. This script used to paper over it by
+    copying the player's settings across at install time, which could only work
+    if the player had already been configured — on a new screen it never had, and
+    it went stale afterwards anyway.
 
     Note that the Windows screen saver dialog may show "(None)" selected even
     when this worked: it lists the .scr files it finds in the system folders,
@@ -68,13 +74,6 @@ $ErrorActionPreference = 'Stop'
 # produces this file from the player executable.
 $ScreenSaverFileName = 'DISPLAX.scr'
 
-# The settings file is named after the executable without its extension, so
-# DISPLAX.scr reads DISPLAX.xml and the player reads DisplaxPlayer.xml. Keep
-# these in step with AssemblyName in XiboClient.csproj and with the post-build
-# event that produces the .scr.
-$PlayerSettingsFileName     = 'DisplaxPlayer.xml'
-$ScreenSaverSettingsFileName = 'DISPLAX.xml'
-
 if (-not $ScreenSaverPath) {
     $ScreenSaverPath = Join-Path (Split-Path -Parent $PSScriptRoot) $ScreenSaverFileName
 }
@@ -117,35 +116,6 @@ function Set-ScreenSaverForKey {
     Write-Output "$Label : screen saver set, starts after $TimeoutSeconds s idle."
 }
 
-function Copy-PlayerSettings {
-    <#
-        Gives the screen saver the CMS address and key the player already has, by
-        copying the settings file to the name the .scr will look for. Never
-        overwrites: if the screen saver was configured separately on purpose,
-        that wins.
-    #>
-    param(
-        [Parameter(Mandatory)][string]$RoamingPath,
-        [Parameter(Mandatory)][string]$Label
-    )
-
-    $source = Join-Path $RoamingPath $PlayerSettingsFileName
-    $destination = Join-Path $RoamingPath $ScreenSaverSettingsFileName
-
-    if (-not (Test-Path -LiteralPath $source -PathType Leaf)) {
-        Write-Warning "$Label : the player has no settings yet ($PlayerSettingsFileName). Set the CMS address and key in the player first, then run this again, or the screen saver comes up with nothing to show."
-        return
-    }
-    if (Test-Path -LiteralPath $destination -PathType Leaf) {
-        Write-Output "$Label : the screen saver already has its own settings, left alone."
-        return
-    }
-    if (-not $PSCmdlet.ShouldProcess($Label, "Copy $PlayerSettingsFileName to $ScreenSaverSettingsFileName")) { return }
-
-    Copy-Item -LiteralPath $source -Destination $destination
-    Write-Output "$Label : CMS address and key copied to the screen saver."
-}
-
 function Get-RealUserProfiles {
     <#
         Reads the profile list rather than listing C:\Users, because the SID is
@@ -165,18 +135,12 @@ function Get-RealUserProfiles {
 
 if (-not $AllUsers) {
     Set-ScreenSaverForKey -DesktopKey 'HKCU:\Control Panel\Desktop' -Label "$env:USERNAME (current user)"
-    if (-not $Remove) {
-        Copy-PlayerSettings -RoamingPath $env:APPDATA -Label "$env:USERNAME (current user)"
-    }
 }
 else {
     $profiles = @(Get-RealUserProfiles)
     if (-not $profiles) {
         Write-Warning 'No user profiles found; falling back to the current user.'
         Set-ScreenSaverForKey -DesktopKey 'HKCU:\Control Panel\Desktop' -Label "$env:USERNAME (current user)"
-        if (-not $Remove) {
-            Copy-PlayerSettings -RoamingPath $env:APPDATA -Label "$env:USERNAME (current user)"
-        }
     }
 
     $hiveIndex = 0
@@ -185,12 +149,6 @@ else {
     foreach ($userProfile in $profiles) {
         $label = Split-Path -Leaf $userProfile.Path
         $mounted = "Registry::HKEY_USERS\$($userProfile.Sid)"
-
-        # Before the registry, because this part does not care whether the user's
-        # hive is loaded — it is a file copy inside their profile.
-        if (-not $Remove) {
-            Copy-PlayerSettings -RoamingPath (Join-Path $userProfile.Path 'AppData\Roaming') -Label $label
-        }
 
         if (Test-Path -LiteralPath $mounted) {
             # The user has a session open, so their hive is already loaded and

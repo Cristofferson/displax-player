@@ -59,13 +59,32 @@ InfoBeforeFile=aviso-agpl.txt
 Name: "es"; MessagesFile: "compiler:Languages\Spanish.isl"
 Name: "en"; MessagesFile: "compiler:Default.isl"
 
+[Messages]
+; La pagina de tareas es donde se confunde la gente: da por hecho que la casilla
+; del salvapantallas es OTRA forma de instalar, y que al marcarla no deberia
+; quedar tambien un player normal. No es asi, y el texto de arriba de la lista es
+; el unico lugar donde se puede decir antes de que marque nada.
+;
+; El texto va en espanol para los dos idiomas, igual que las descripciones de
+; [Tasks]: el instalador se usa en tienda y ese es el idioma de quien lo corre.
+SelectTasksLabel2=Se instala siempre el player completo. Estas casillas no eligen QUE se instala, sino CUANDO se ve el contenido: el salvapantallas es el mismo programa, no una instalacion aparte. Puede marcar las dos, una o ninguna.
+
 [Tasks]
-Name: "autoarranque"; Description: "Iniciar DISPLAX Player al encender el equipo"; GroupDescription: "Operacion desatendida:"
-Name: "escritorio"; Description: "Crear acceso directo en el escritorio"; Flags: unchecked
-; La compilacion ya trae DISPLAX.scr, que es el mismo binario con el bit de
-; salvapantallas puesto. Se registra por ruta completa y NO copiandolo a System32:
-; ahi no encontraria los ~310 archivos que necesita a su lado.
-Name: "salvapantallas"; Description: "Usar el player como salvapantallas a los 10 minutos sin actividad"; GroupDescription: "Operacion desatendida:"; Flags: unchecked
+; Ninguna de estas casillas cambia lo que se instala: el player completo se copia
+; siempre. DISPLAX.scr es el MISMO binario con el bit de salvapantallas puesto (lo
+; produce el post-build con un xcopy del .exe), asi que una instalacion "solo
+; salvapantallas" no existe: el .scr necesita los ~310 archivos del player a su
+; lado. Lo unico que se elige aqui es CUANDO aparece el contenido en pantalla, y
+; las dos casillas son independientes: marcar las dos deja las dos puestas.
+;
+; Van seguidas y con el MISMO GroupDescription a proposito. Meter otra tarea en
+; medio (el acceso directo, por ejemplo) hace que Inno repita el encabezado del
+; grupo y parezca que son dos apartados distintos.
+Name: "autoarranque"; Description: "Todo el tiempo: iniciar el player al encender el equipo (pantalla dedicada)"; GroupDescription: "Cuando debe verse el contenido. El player se instala igual en los dos casos:"
+; Se registra por ruta completa y NO copiandolo a System32: ahi no encontraria los
+; ~310 archivos que necesita a su lado.
+Name: "salvapantallas"; Description: "Solo en reposo: mostrarlo como salvapantallas tras 10 minutos sin actividad (equipo que ademas se usa para trabajar)"; GroupDescription: "Cuando debe verse el contenido. El player se instala igual en los dos casos:"; Flags: unchecked
+Name: "escritorio"; Description: "Crear acceso directo en el escritorio"; GroupDescription: "Accesos directos:"; Flags: unchecked
 
 [Files]
 Source: "{#PayloadDir}\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
@@ -103,6 +122,11 @@ Filename: "powershell.exe"; \
 ; El ajuste del salvapantallas es POR USUARIO, asi que corre con -AllUsers por la
 ; misma razon que la migracion: quien instala es un administrador y quien mira la
 ; pantalla no.
+;
+; Solo toca el registro. Puede correr aqui, antes de que nadie haya capturado el
+; CMS, porque el salvapantallas ya NO tiene ajustes propios que llenar: comparte
+; el archivo del player (ApplicationSettings.cs nombra los ajustes con el nombre
+; del ENSAMBLADO, que no cambia al copiar el .exe a DISPLAX.scr).
 Filename: "powershell.exe"; \
   Parameters: "-NoProfile -ExecutionPolicy Bypass -File ""{app}\tools\Install-Screensaver.ps1"" -AllUsers"; \
   StatusMsg: "Registrando el salvapantallas..."; \
@@ -110,9 +134,10 @@ Filename: "powershell.exe"; \
 
 ; En una pantalla nueva no hay ajustes que migrar y el player arranca sin registrar:
 ; una pantalla en negro que parece un cuelgue. Por eso la primera casilla es la de
-; configurar el CMS, y viene marcada.
+; configurar el CMS, y viene marcada. Sirve para los dos modos: lo que se capture
+; aqui es lo que usa tambien el salvapantallas.
 Filename: "{app}\{#AppExeName}"; Parameters: "o"; \
-  Description: "Configurar la direccion del CMS y la llave ahora"; \
+  Description: "Configurar la direccion del CMS y la llave ahora (sirve para los dos modos)"; \
   Flags: nowait postinstall skipifsilent
 
 Filename: "{app}\{#AppExeName}"; Description: "Iniciar DISPLAX Player ahora"; \

@@ -101,7 +101,7 @@ MainWindow (WPF Window)
 
 ## Configuration
 
-Default settings live in `default.config.xml`. At runtime the player writes settings to the user's AppData folder. Notable settings:
+Default settings live in `default.config.xml`. At runtime the player writes settings to `%APPDATA%\<assembly name>.xml` — `DisplaxPlayer.xml`, named from the assembly and **not** from the file on disk, so the screensaver copy shares it (see Development Gotchas). Notable settings:
 
 | Setting | Description | Default |
 |---------|-------------|---------|
@@ -160,6 +160,8 @@ Three engines are available; selection is controlled by settings:
 ## Development Gotchas
 
 - **`Action` namespace conflict** — The `Action/` directory creates a `XiboClient.Action` namespace. Any use of `System.Action` (e.g. `Dispatcher.BeginInvoke(new Action(...))`) must be fully qualified as `System.Action` or the compiler will resolve it to the namespace and emit CS0118.
+
+- **Settings are named after the assembly, never the running file** — `ApplicationSettings.Load()`/`Save()` build the `%APPDATA%` file name from `GetSettingsFileNameFromAssembly()`, not from `Process.MainModule.FileName`. This is load-bearing: the screensaver is a byte-for-byte copy of the player named `DISPLAX.scr`, so the module name would resolve to `DISPLAX.xml` — a file nobody writes — and the screensaver would come up with no CMS address, no key and no identity next to a fully registered player. Reverting to the module name also silently re-breaks renaming the executable (`%APPDATA%\<exe>.xml` orphans on rename, which is what `tools/Migrate-FromXibo.ps1` exists to repair).
 
 ## External Resources
 
