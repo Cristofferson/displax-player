@@ -140,8 +140,18 @@ Filename: "{app}\{#AppExeName}"; Parameters: "o"; \
   Description: "Configurar la direccion del CMS y la llave ahora (sirve para los dos modos)"; \
   Flags: nowait postinstall skipifsilent
 
+; No se ofrece en una instalacion de SOLO salvapantallas, y no es por limpieza:
+; abrir el player en modo normal arranca el watchdog, que a partir de ahi revive
+; DisplaxPlayer.exe cada 60 segundos cada vez que no lo encuentra corriendo
+; (Watcher.cs) y no se entera de que la pantalla se cierra a proposito. En una
+; maquina donde el player solo debe verse como protector, esa casilla dejaba un
+; player reapareciendo solo cada minuto hasta reiniciar.
+;
+; El watchdog en si esta bien como esta: en una pantalla dedicada es justo lo que
+; se quiere, y el comando SoftRestart del CMS DEPENDE de el para volver a levantar
+; el player. Por eso se corta aqui, en quien lo dispara, y no en el player.
 Filename: "{app}\{#AppExeName}"; Description: "Iniciar DISPLAX Player ahora"; \
-  Flags: nowait postinstall skipifsilent unchecked
+  Flags: nowait postinstall skipifsilent unchecked; Check: EsPantallaDePlayer
 
 [UninstallRun]
 ; Si se registro el salvapantallas hay que soltarlo antes de borrar los archivos,
@@ -157,3 +167,14 @@ Filename: "powershell.exe"; \
 ; desinstalar-reinstalar no debe costarle a la tienda una redescarga completa ni
 ; volver a dar de alta la pantalla en el CMS.
 Type: filesandordirs; Name: "{app}\tools"
+
+; [Code] va al final a proposito: Inno exige que sea la ultima seccion del script.
+; Ojo con los comentarios aqui dentro, que son Pascal y no del formato .iss: se
+; escriben con // y un ; al inicio de linea es un error de compilacion.
+[Code]
+// Cierto salvo en la instalacion de SOLO salvapantallas, que es la unica donde
+// abrir el player en modo normal no es lo que la pantalla va a hacer nunca.
+function EsPantallaDePlayer: Boolean;
+begin
+  Result := WizardIsTaskSelected('autoarranque') or not WizardIsTaskSelected('salvapantallas');
+end;
