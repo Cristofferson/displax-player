@@ -161,6 +161,8 @@ Three engines are available; selection is controlled by settings:
 
 - **`Action` namespace conflict** — The `Action/` directory creates a `XiboClient.Action` namespace. Any use of `System.Action` (e.g. `Dispatcher.BeginInvoke(new Action(...))`) must be fully qualified as `System.Action` or the compiler will resolve it to the namespace and emit CS0118.
 
+- **`watchdog\disabled` turns the watchdog off** — if `<install folder>\watchdog\disabled` exists, `WatchDogManager.Start()` logs and returns. The installer drops it on screensaver-only machines, where there is no player to keep alive and the watchdog would otherwise relaunch `DisplaxPlayer.exe` every 60s forever (it cannot tell a crash from a window closed on purpose). Do not "fix" this into an `ApplicationSettings` property: `PopulateFromXml` skips `ExcludedProperties`, so a normal setting gets persisted into the library's `config.xml`, which is loaded last and wins — the value would then survive a reinstall meant to re-enable it.
+
 - **Settings are named after the assembly, never the running file** — `ApplicationSettings.Load()`/`Save()` build the `%APPDATA%` file name from `GetSettingsFileNameFromAssembly()`, not from `Process.MainModule.FileName`. This is load-bearing: the screensaver is a byte-for-byte copy of the player named `DISPLAX.scr`, so the module name would resolve to `DISPLAX.xml` — a file nobody writes — and the screensaver would come up with no CMS address, no key and no identity next to a fully registered player. Reverting to the module name also silently re-breaks renaming the executable (`%APPDATA%\<exe>.xml` orphans on rename, which is what `tools/Migrate-FromXibo.ps1` exists to repair).
 
 ## External Resources

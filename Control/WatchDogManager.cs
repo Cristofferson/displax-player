@@ -32,8 +32,25 @@ namespace XiboClient.Control
             //string path = @"C:\Program Files (x86)\Xibo Player\watchdog\x86\XiboClientWatchdog.exe";
             string executablePath = Process.GetCurrentProcess().MainModule.FileName;
             string productName = ApplicationSettings.GetProductNameFromAssembly();
-            string path = Path.GetDirectoryName(executablePath) + @"\watchdog\x86\" + ((productName != "Xibo") ? productName + "Watchdog.exe" : "XiboClientWatchdog.exe");
+            string watchDogFolder = Path.GetDirectoryName(executablePath) + @"\watchdog";
+            string path = watchDogFolder + @"\x86\" + ((productName != "Xibo") ? productName + "Watchdog.exe" : "XiboClientWatchdog.exe");
             string args = "-p \"" + executablePath + "\" -l \"" + ApplicationSettings.Default.LibraryPath + "\"";
+
+            // A screen that only shows the content as a screen saver has no player to keep
+            // alive. The watchdog cannot tell that apart: it sees no DisplaxPlayer.exe process
+            // and starts one every minute, forever, because it also cannot tell a crash from a
+            // window someone closed on purpose. The installer drops this marker on those
+            // machines and removes it when the same machine is reinstalled as a normal player.
+            //
+            // This one is logged. The File.Exists below is silent when the watchdog is simply
+            // missing, and that silence has already cost us a player that looked perfect and
+            // never recovered from a hang - one silent skip in this method is enough.
+            string disabledMarker = Path.Combine(watchDogFolder, "disabled");
+            if (File.Exists(disabledMarker))
+            {
+                Trace.WriteLine(new LogMessage("WatchDogManager - Start", "Not starting the watchdog: disabled by " + disabledMarker), LogType.Info.ToString());
+                return;
+            }
 
             // Start it
             if (File.Exists(path))

@@ -1,0 +1,15 @@
+Este archivo apaga el watchdog en esta computadora.
+
+Lo pone el instalador cuando el DISPLAX Player se instala SOLO como salvapantallas,
+y se llama "disabled" a secas: el player busca ese nombre exacto en esta carpeta y,
+si lo encuentra, no arranca el watchdog y lo anota en su registro.
+
+Por que: el watchdog existe para que una pantalla dedicada se recupere sola de un
+cuelgue, asi que cada minuto revisa si DisplaxPlayer.exe esta corriendo y lo vuelve
+a lanzar cuando no lo encuentra. No distingue un cuelgue de una ventana que alguien
+cerro a proposito. En una maquina donde el contenido solo debe verse como protector
+de pantalla eso se traduce en un player reapareciendo solo cada minuto.
+
+Si se reinstala el player en esta misma maquina con el arranque automatico marcado,
+el instalador borra este archivo y el watchdog vuelve a funcionar. Borrarlo a mano
+tambien sirve, pero el efecto no se nota hasta el siguiente arranque del player.

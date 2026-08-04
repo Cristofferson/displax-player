@@ -88,6 +88,12 @@ Name: "autoarranque"; Description: "Todo el tiempo: iniciar el player al encende
 Name: "salvapantallas"; Description: "Solo en reposo: mostrarlo como salvapantallas tras 3 minutos sin actividad (equipo que ademas se usa para trabajar)"; GroupDescription: "Cuando debe verse el contenido. El player se instala igual en los dos casos:"; Flags: unchecked
 Name: "escritorio"; Description: "Crear acceso directo en el escritorio"; GroupDescription: "Accesos directos:"; Flags: unchecked
 
+[InstallDelete]
+; Corre ANTES de copiar los archivos. Se borra siempre y [Files] lo vuelve a poner
+; solo si esta instalacion es de solo salvapantallas: asi el marcador sigue a la
+; casilla en las dos direcciones sin necesitar un Check aqui.
+Type: files; Name: "{app}\watchdog\disabled"
+
 [Files]
 Source: "{#PayloadDir}\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
 ; El script de migracion viaja con el instalador para poder relanzarlo a mano
@@ -96,6 +102,13 @@ Source: "..\tools\Migrate-FromXibo.ps1"; DestDir: "{app}\tools"; Flags: ignoreve
 ; Tambien viaja suelto para poder activar o quitar el salvapantallas despues, sin
 ; reinstalar, en las maquinas donde se decida mas tarde.
 Source: "..\tools\Install-Screensaver.ps1"; DestDir: "{app}\tools"; Flags: ignoreversion
+; El marcador que apaga el watchdog, solo en la instalacion de SOLO salvapantallas.
+; Ahi no hay un player que mantener vivo, y el watchdog lo estaria relanzando cada
+; minuto. El propio archivo explica que hace, para quien lo encuentre en la carpeta.
+; [InstallDelete] lo borra antes de cada instalacion, asi que reinstalar la misma
+; maquina como player normal lo quita solo.
+Source: "watchdog-disabled.txt"; DestDir: "{app}\watchdog"; DestName: "disabled"; \
+  Flags: ignoreversion; Check: not EsPantallaDePlayer
 
 [Icons]
 Name: "{group}\{#AppName}"; Filename: "{app}\{#AppExeName}"
