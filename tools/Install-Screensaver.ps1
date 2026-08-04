@@ -42,7 +42,9 @@
     which is where the installer puts both.
 
 .PARAMETER TimeoutSeconds
-    Idle time before the screen saver starts. Default 600 (ten minutes).
+    Idle time before the screen saver starts. Default 180 (three minutes).
+    Keep this in step with the text of the screen saver task in
+    installer\displax-player.iss, which tells the user the same number.
 
 .PARAMETER AllUsers
     Configure every profile on the machine instead of only the current user.
@@ -63,7 +65,7 @@
 [CmdletBinding(SupportsShouldProcess = $true)]
 param(
     [string]$ScreenSaverPath,
-    [int]$TimeoutSeconds = 600,
+    [int]$TimeoutSeconds = 180,
     [switch]$AllUsers,
     [switch]$Remove
 )

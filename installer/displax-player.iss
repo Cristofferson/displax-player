@@ -83,7 +83,9 @@ SelectTasksLabel2=Se instala siempre el player completo. Estas casillas no elige
 Name: "autoarranque"; Description: "Todo el tiempo: iniciar el player al encender el equipo (pantalla dedicada)"; GroupDescription: "Cuando debe verse el contenido. El player se instala igual en los dos casos:"
 ; Se registra por ruta completa y NO copiandolo a System32: ahi no encontraria los
 ; ~310 archivos que necesita a su lado.
-Name: "salvapantallas"; Description: "Solo en reposo: mostrarlo como salvapantallas tras 10 minutos sin actividad (equipo que ademas se usa para trabajar)"; GroupDescription: "Cuando debe verse el contenido. El player se instala igual en los dos casos:"; Flags: unchecked
+; Los 3 minutos los fija el valor por omision de TimeoutSeconds en el script:
+; si cambia alla, esta leyenda tiene que cambiar aqui.
+Name: "salvapantallas"; Description: "Solo en reposo: mostrarlo como salvapantallas tras 3 minutos sin actividad (equipo que ademas se usa para trabajar)"; GroupDescription: "Cuando debe verse el contenido. El player se instala igual en los dos casos:"; Flags: unchecked
 Name: "escritorio"; Description: "Crear acceso directo en el escritorio"; GroupDescription: "Accesos directos:"; Flags: unchecked
 
 [Files]
