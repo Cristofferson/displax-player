@@ -19,6 +19,28 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      # The installer ships these scripts and runs them with -ExecutionPolicy
+      # Bypass at install time, where a syntax error is invisible: PowerShell
+      # exits, Inno Setup carries on, and the failure surfaces on the shop's PC
+      # as a player that came up unregistered with no explanation. Parsing costs
+      # a second and turns that into a red build.
+      - name: Parse the installer PowerShell scripts
+        shell: pwsh
+        run: |
+          $failed = $false
+          foreach ($script in Get-ChildItem -Path tools -Filter *.ps1) {
+            $errors = $null
+            [System.Management.Automation.Language.Parser]::ParseFile(
+              $script.FullName, [ref]$null, [ref]$errors) | Out-Null
+            if ($errors) {
+              Write-Error "$($script.Name): $($errors -join '; ')"
+              $failed = $true
+            } else {
+              Write-Host "$($script.Name): ok"
+            }
+          }
+          if ($failed) { exit 1 }
+
       - name: Add MSBuild to PATH
         uses: microsoft/setup-msbuild@v2
 

@@ -20,6 +20,26 @@
        library and shows nothing until it finishes — with a fifteen-video
        layout that is a long blank wall.
 
+    3. The XMR key pair lives INSIDE the library, as id_rsa / id_rsa.pub
+       (HardwareKey.getXmrKey). A library the player finds without one is not an
+       error it reports: it quietly generates a fresh pair and registers the new
+       public key. Everything keeps looking healthy — the display reports in, its
+       files download, scheduled content plays — but every real-time command the
+       CMS pushes (change layout, collect now, screenshot, SoftRestart) arrives
+       encrypted for a key the player no longer holds and is dropped. The only
+       trace is in the CMS log, filed under the display itself:
+
+           [XmrSubscriber] XmrSubscriber - processMessage
+           Unopenable Message: block incorrect
+
+       Carrying the library across covers this on its own, but the library move
+       is refused whenever the destination already exists (see Move-IfSafe), and
+       that is the common case on a machine where the player has been installed
+       or launched before. So the key is carried separately as well: it is small,
+       it is the one file whose absence fails silently, and it is the difference
+       between a screen that obeys the CMS and one that only ever catches up on
+       its next poll.
+
     Run this BEFORE the first launch of the rebranded player. It is safe to run
     twice: anything already migrated is reported and left alone.
 
@@ -83,6 +103,59 @@ function Move-IfSafe {
     }
 }
 
+function Copy-XmrKey {
+    <#
+        Ensures the new library carries the XMR key pair from the old one.
+
+        This runs after the library move, not instead of it: when the move
+        succeeded the key travelled with it and there is nothing left to do. It
+        earns its place in the case the move refuses — destination already
+        present — because that leaves a library with no id_rsa, and the player
+        answers that by generating a new pair and silently losing every push
+        command from the CMS.
+
+        Copies rather than moves, and never overwrites. A key already in the new
+        library is the one the CMS most likely knows: replacing it would break
+        exactly what this is meant to repair. Two installs sharing one key pair
+        is harmless — both can open the same message — whereas two keys where the
+        CMS stores only one means the loser goes deaf.
+    #>
+    param(
+        [Parameter(Mandatory)][string]$OldLibrary,
+        [Parameter(Mandatory)][string]$NewLibrary
+    )
+
+    if (-not (Test-Path -LiteralPath $NewLibrary)) {
+        # No new library yet: either the move carried everything across, or
+        # there was nothing to migrate. Either way there is nowhere to copy to.
+        return
+    }
+
+    foreach ($name in @('id_rsa', 'id_rsa.pub')) {
+        $source      = Join-Path $OldLibrary $name
+        $destination = Join-Path $NewLibrary $name
+
+        if (Test-Path -LiteralPath $destination) {
+            Write-Host "  = XMR key ($name) : already present, left alone"
+            continue
+        }
+
+        if (-not (Test-Path -LiteralPath $source)) {
+            # An old library with no key is normal on a player that never had
+            # XMR reach it. The new one will generate a pair on first run.
+            Write-Host "  - XMR key ($name) : nothing to migrate ($source not found)"
+            continue
+        }
+
+        if ($PSCmdlet.ShouldProcess($source, "Copy to $destination")) {
+            Copy-Item -LiteralPath $source -Destination $destination
+            Write-Host "  + XMR key ($name) : carried over"
+            Write-Host "      $source"
+            Write-Host "   -> $destination"
+        }
+    }
+}
+
 function Migrate-Profile {
     param(
         [Parameter(Mandatory)][string]$AppData,   # ...\AppData\Roaming
@@ -106,9 +179,15 @@ function Migrate-Profile {
 
     # 2. Media library — also holds config.xml with the hardware key, so moving
     #    it keeps the display registered as the SAME display in the CMS.
-    Move-IfSafe -What 'Media library' `
-        -Source      (Join-Path $Documents "$OldProductName Library") `
-        -Destination (Join-Path $Documents "$NewProductName Library")
+    $oldLibrary = Join-Path $Documents "$OldProductName Library"
+    $newLibrary = Join-Path $Documents "$NewProductName Library"
+
+    Move-IfSafe -What 'Media library' -Source $oldLibrary -Destination $newLibrary
+
+    # 3. XMR key pair — normally rides along inside the library above. Checked
+    #    separately because when the move is refused its absence is the one
+    #    failure the player never reports: it just stops obeying the CMS.
+    Copy-XmrKey -OldLibrary $oldLibrary -NewLibrary $newLibrary
 }
 
 Write-Host "DISPLAX Player — migration from Xibo for Windows"
