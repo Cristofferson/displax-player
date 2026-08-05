@@ -49,7 +49,12 @@
             </TabItem>
             <TabItem Header="About">
                 <Grid Background="#FFE5E5E5" Margin="0,0,0,85">
-                    <Image Height="100" Width="100" Source="Resources/logo.png" Margin="656,10,10,104"/>
+                    <!-- El recuadro sigue la relacion de aspecto del logotipo (668x188 = 3.55:1).
+                         Heredado de Xibo venia cuadrado, 100x100, porque el logo de upstream era
+                         casi 2:1 y llenaba la mitad del alto. Con el lockup DISPLAX, que es mucho
+                         mas apaisado, un recuadro cuadrado lo dibujaria a 100x28 y dejaria dos
+                         tercios del alto en aire: se veria mas pequeno que el que reemplaza. -->
+                    <Image Height="31" Width="110" Source="Resources/logo.png" Margin="646,45,10,124"/>
                     <RichTextBox x:Name="textBoxLicence" HorizontalAlignment="Left" Height="194" Margin="10,10,0,0" VerticalAlignment="Top" Width="621" IsReadOnly="True" ScrollViewer.CanContentScroll="True" VerticalScrollBarVisibility="Auto">
 
                     </RichTextBox>
