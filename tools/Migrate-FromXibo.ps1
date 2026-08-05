@@ -119,6 +119,14 @@ function Copy-XmrKey {
         exactly what this is meant to repair. Two installs sharing one key pair
         is harmless — both can open the same message — whereas two keys where the
         CMS stores only one means the loser goes deaf.
+
+        Only id_rsa matters. It is a private-key PEM, so PemReader hands back the
+        whole pair and getXmrPublicKey derives the public half in memory; the
+        player writes id_rsa.pub once at generation and never reads it again.
+        LibraryAgent's _persistentFiles protects id_rsa from the two-minute
+        library sweep but NOT id_rsa.pub, so on any library with some age the
+        .pub is already gone. That is normal, and saying "not found" about it
+        would send whoever runs this looking for a problem that isn't there.
     #>
     param(
         [Parameter(Mandatory)][string]$OldLibrary,
@@ -131,28 +139,33 @@ function Copy-XmrKey {
         return
     }
 
-    foreach ($name in @('id_rsa', 'id_rsa.pub')) {
-        $source      = Join-Path $OldLibrary $name
-        $destination = Join-Path $NewLibrary $name
+    $source      = Join-Path $OldLibrary 'id_rsa'
+    $destination = Join-Path $NewLibrary 'id_rsa'
 
-        if (Test-Path -LiteralPath $destination) {
-            Write-Host "  = XMR key ($name) : already present, left alone"
-            continue
-        }
+    if (Test-Path -LiteralPath $destination) {
+        Write-Host "  = XMR key : already present, left alone"
+    }
+    elseif (-not (Test-Path -LiteralPath $source)) {
+        # An old library with no key is normal on a player that never had XMR
+        # reach it. The new one will generate a pair on first run.
+        Write-Host "  - XMR key : nothing to migrate ($source not found)"
+    }
+    elseif ($PSCmdlet.ShouldProcess($source, "Copy to $destination")) {
+        Copy-Item -LiteralPath $source -Destination $destination
+        Write-Host "  + XMR key : carried over"
+        Write-Host "      $source"
+        Write-Host "   -> $destination"
+    }
 
-        if (-not (Test-Path -LiteralPath $source)) {
-            # An old library with no key is normal on a player that never had
-            # XMR reach it. The new one will generate a pair on first run.
-            Write-Host "  - XMR key ($name) : nothing to migrate ($source not found)"
-            continue
-        }
+    # Cosmetic only, and quietly: if the .pub happens to have survived the sweep
+    # it is nice to keep the pair together for anyone inspecting the folder.
+    $sourcePub      = Join-Path $OldLibrary 'id_rsa.pub'
+    $destinationPub = Join-Path $NewLibrary 'id_rsa.pub'
 
-        if ($PSCmdlet.ShouldProcess($source, "Copy to $destination")) {
-            Copy-Item -LiteralPath $source -Destination $destination
-            Write-Host "  + XMR key ($name) : carried over"
-            Write-Host "      $source"
-            Write-Host "   -> $destination"
-        }
+    if ((Test-Path -LiteralPath $sourcePub) -and
+        -not (Test-Path -LiteralPath $destinationPub) -and
+        $PSCmdlet.ShouldProcess($sourcePub, "Copy to $destinationPub")) {
+        Copy-Item -LiteralPath $sourcePub -Destination $destinationPub
     }
 }
 
